@@ -3,25 +3,28 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#08110f">
+  <meta name="theme-color" content="#07110f">
   <title>看见正在发生的声音</title>
   <style>
     :root {
-      --ink: #eaf8f1;
-      --muted: #9baea7;
+      --background: #07110f;
+      --text: #edf9f4;
+      --muted: #9badA5;
       --mint: #75e5c4;
-      --glass: rgba(8, 18, 15, 0.58);
-      --line: rgba(177, 241, 217, 0.18);
+      --line: rgba(182, 242, 220, 0.18);
+      --panel: rgba(7, 18, 15, 0.62);
     }
 
-    * { box-sizing: border-box; }
+    * {
+      box-sizing: border-box;
+    }
 
     body {
       margin: 0;
       min-height: 100vh;
       overflow: hidden;
-      background: #08110f;
-      color: var(--ink);
+      background: var(--background);
+      color: var(--text);
       font-family: Inter, "PingFang SC", "Microsoft YaHei", sans-serif;
     }
 
@@ -32,24 +35,24 @@
       height: 100%;
     }
 
-    .grain {
+    .texture {
       position: fixed;
       inset: 0;
       pointer-events: none;
-      opacity: 0.08;
+      opacity: 0.07;
       background-image:
-        linear-gradient(rgba(255,255,255,.15) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,.15) 1px, transparent 1px);
-      background-size: 4px 4px;
+        linear-gradient(rgba(255, 255, 255, 0.14) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.14) 1px, transparent 1px);
+      background-size: 5px 5px;
       mix-blend-mode: soft-light;
     }
 
     .topbar {
       position: fixed;
+      z-index: 2;
       top: 0;
       left: 0;
       right: 0;
-      z-index: 2;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -60,7 +63,6 @@
     .brand {
       font-size: 16px;
       font-weight: 700;
-      letter-spacing: 0;
     }
 
     .status {
@@ -75,8 +77,8 @@
       width: 8px;
       height: 8px;
       border-radius: 50%;
-      background: #53635d;
-      transition: 0.3s;
+      background: #586962;
+      transition: 0.25s;
     }
 
     .status-dot.active {
@@ -89,19 +91,21 @@
       z-index: 3;
       top: 50%;
       right: 30px;
-      transform: translateY(-50%);
       display: none;
       align-items: center;
       gap: 10px;
+      transform: translateY(-50%);
       padding: 10px 12px;
       border: 1px solid var(--line);
-      background: var(--glass);
-      color: var(--ink);
+      background: var(--panel);
+      color: var(--text);
       font-size: 13px;
-      backdrop-filter: blur(12px);
+      backdrop-filter: blur(14px);
     }
 
-    .sound-badge.visible { display: flex; }
+    .sound-badge.visible {
+      display: flex;
+    }
 
     .badge-icon {
       width: 9px;
@@ -114,21 +118,24 @@
     .caption {
       position: fixed;
       z-index: 4;
-      left: 50%;
       bottom: 104px;
+      left: 50%;
       width: min(720px, calc(100vw - 40px));
       transform: translateX(-50%);
+      color: var(--text);
       text-align: center;
       font-size: clamp(19px, 2.4vw, 31px);
       font-weight: 600;
       line-height: 1.45;
       opacity: 0;
-      transition: opacity 0.4s;
-      text-shadow: 0 2px 20px rgba(0,0,0,.7);
       pointer-events: none;
+      text-shadow: 0 2px 20px rgba(0, 0, 0, 0.72);
+      transition: opacity 0.35s;
     }
 
-    .caption.visible { opacity: 1; }
+    .caption.visible {
+      opacity: 1;
+    }
 
     .caption small {
       display: block;
@@ -141,20 +148,20 @@
     .controls {
       position: fixed;
       z-index: 5;
-      left: 50%;
       bottom: 26px;
-      transform: translateX(-50%);
+      left: 50%;
       display: flex;
       gap: 5px;
+      transform: translateX(-50%);
       padding: 5px;
       border: 1px solid var(--line);
-      background: rgba(7, 17, 14, 0.75);
+      background: rgba(7, 17, 14, 0.78);
       backdrop-filter: blur(14px);
     }
 
     .mode {
-      min-width: 90px;
-      min-height: 37px;
+      min-width: 96px;
+      min-height: 38px;
       border: 0;
       background: transparent;
       color: var(--muted);
@@ -165,11 +172,13 @@
       transition: 0.2s;
     }
 
-    .mode:hover { color: var(--ink); }
+    .mode:hover {
+      color: var(--text);
+    }
 
     .mode.active {
       background: rgba(117, 229, 196, 0.18);
-      color: var(--ink);
+      color: var(--text);
     }
 
     .start-screen {
@@ -178,7 +187,7 @@
       inset: 0;
       display: grid;
       place-items: center;
-      background: #08110f;
+      background: var(--background);
       transition: opacity 0.7s, visibility 0.7s;
     }
 
@@ -196,15 +205,14 @@
       margin: 0;
       font-size: clamp(36px, 6vw, 70px);
       line-height: 1.13;
-      letter-spacing: 0;
     }
 
     .start-content p {
+      max-width: 380px;
       margin: 22px auto 30px;
-      max-width: 365px;
       color: var(--muted);
-      line-height: 1.75;
       font-size: 14px;
+      line-height: 1.75;
     }
 
     .start-button {
@@ -215,128 +223,153 @@
       color: #052119;
       cursor: pointer;
       font: inherit;
-      font-weight: 800;
       font-size: 15px;
+      font-weight: 800;
     }
 
-    .start-button:disabled { opacity: .65; cursor: wait; }
+    .start-button:disabled {
+      opacity: 0.65;
+      cursor: wait;
+    }
 
     .error {
       min-height: 22px;
       margin-top: 15px;
-      color: #ffb9aa;
+      color: #ffbaaa;
       font-size: 12px;
       line-height: 1.5;
     }
 
     @media (max-width: 600px) {
-      .topbar { padding: 18px; }
+      .topbar {
+        padding: 18px;
+      }
+
       .sound-badge {
         top: auto;
         right: 18px;
         bottom: 91px;
         transform: none;
       }
-      .controls { bottom: 18px; }
-      .mode { min-width: 76px; padding: 0 9px; }
-      .caption { bottom: 88px; }
+
+      .controls {
+        bottom: 18px;
+      }
+
+      .mode {
+        min-width: 78px;
+        padding: 0 9px;
+      }
+
+      .caption {
+        bottom: 92px;
+      }
     }
   </style>
 </head>
+
 <body>
   <canvas id="canvas"></canvas>
-  <div class="grain"></div>
+  <div class="texture"></div>
 
   <header class="topbar">
     <div class="brand">看见正在发生的声音</div>
     <div class="status">
-      <span class="status-dot" id="dot"></span>
-      <span id="status">等待感知</span>
+      <span class="status-dot" id="statusDot"></span>
+      <span id="statusText">等待感知</span>
     </div>
   </header>
 
-  <div class="sound-badge" id="badge">
+  <aside class="sound-badge" id="soundBadge">
     <span class="badge-icon" id="badgeIcon"></span>
     <span id="badgeText">环境声音</span>
-  </div>
+  </aside>
 
   <div class="caption" id="caption"></div>
 
-  <nav class="controls" aria-label="视觉模式">
+  <nav class="controls" aria-label="声音视觉模式">
     <button class="mode active" data-mode="field">声场</button>
-    <button class="mode" data-mode="music">音乐 / 节奏</button>
-    <button class="mode" data-mode="calm">疗愈 / ASMR</button>
+    <button class="mode" data-mode="rhythm">节奏</button>
+    <button class="mode" data-mode="soundscape">静观声景</button>
   </nav>
 
   <section class="start-screen" id="startScreen">
     <div class="start-content">
       <h1>让声音<br>成为可见的存在</h1>
-      <p>麦克风声音仅在当前浏览器中实时分析，不会被保存、上传或播放。</p>
+      <p>环境声音只会在当前浏览器中实时分析，不会被保存、上传或播放。</p>
       <button class="start-button" id="startButton">开始感知</button>
-      <div class="error" id="error"></div>
+      <div class="error" id="errorMessage"></div>
     </div>
   </section>
 
   <script>
     const canvas = document.getElementById("canvas");
-    const ctx = canvas.getContext("2d");
-    const $ = (id) => document.getElementById(id);
+    const context = canvas.getContext("2d");
+    const getElement = (id) => document.getElementById(id);
 
-    let analyser;
     let audioContext;
+    let analyser;
     let frequencyData;
     let timeData;
-    let active = false;
+    let isRunning = false;
     let mode = "field";
     let previousEnergy = 0;
-    let lastBeatAt = 0;
-    let lastBadgeAt = 0;
-    let speechUntil = 0;
+    let lastPulseTime = 0;
+    let lastBadgeTime = 0;
+    let speechActiveUntil = 0;
     let captionTimer;
-    let particles = [];
-    let ripples = [];
-    let words = [];
-    let phase = 0;
+    let animationTime = 0;
 
-    const colors = {
+    const particles = [];
+    const ripples = [];
+    const wordParticles = [];
+
+    const palettes = {
       field: ["#75e5c4", "#f4cf68", "#f18a75"],
-      music: ["#7de6d0", "#89b9ff", "#f4cf68"],
-      calm: ["#8de2d2", "#c1b6f7", "#edcf8a"]
+      rhythm: ["#7de6d0", "#89b9ff", "#f4cf68"],
+      soundscape: ["#8de2d2", "#aebdf5", "#e9cf87"]
     };
 
-    function resize() {
-      const ratio = Math.min(devicePixelRatio || 1, 2);
-      canvas.width = innerWidth * ratio;
-      canvas.height = innerHeight * ratio;
-      canvas.style.width = innerWidth + "px";
-      canvas.style.height = innerHeight + "px";
-      ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+    function resizeCanvas() {
+      const ratio = Math.min(window.devicePixelRatio || 1, 2);
+
+      canvas.width = window.innerWidth * ratio;
+      canvas.height = window.innerHeight * ratio;
+      canvas.style.width = window.innerWidth + "px";
+      canvas.style.height = window.innerHeight + "px";
+
+      context.setTransform(ratio, 0, 0, ratio, 0, 0);
     }
 
-    addEventListener("resize", resize);
-    resize();
+    window.addEventListener("resize", resizeCanvas);
+    resizeCanvas();
 
     document.querySelectorAll(".mode").forEach((button) => {
       button.addEventListener("click", () => {
         mode = button.dataset.mode;
+
         document.querySelectorAll(".mode").forEach((item) => {
           item.classList.toggle("active", item === button);
         });
-        showBadge(
-          mode === "field" ? "声场模式" :
-          mode === "music" ? "音乐与节奏模式" : "疗愈与细节模式",
-          colors[mode][0]
-        );
+
+        const message = {
+          field: "声场模式",
+          rhythm: "节奏模式",
+          soundscape: "静观声景模式"
+        }[mode];
+
+        showBadge(message, palettes[mode][0]);
       });
     });
 
-    $("startButton").addEventListener("click", start);
+    getElement("startButton").addEventListener("click", startExperience);
 
-    async function start() {
-      const button = $("startButton");
+    async function startExperience() {
+      const button = getElement("startButton");
+
       button.disabled = true;
       button.textContent = "正在连接麦克风...";
-      $("error").textContent = "";
+      getElement("errorMessage").textContent = "";
 
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
@@ -347,7 +380,10 @@
           }
         });
 
-        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        audioContext = new (
+          window.AudioContext || window.webkitAudioContext
+        )();
+
         await audioContext.resume();
 
         analyser = audioContext.createAnalyser();
@@ -359,401 +395,502 @@
 
         frequencyData = new Uint8Array(analyser.frequencyBinCount);
         timeData = new Uint8Array(analyser.fftSize);
-        active = true;
 
-        $("startScreen").classList.add("hidden");
-        $("dot").classList.add("active");
-        $("status").textContent = "正在感知";
-        showBadge("环境声音已连接", colors.field[0]);
+        isRunning = true;
+
+        getElement("startScreen").classList.add("hidden");
+        getElement("statusDot").classList.add("active");
+        getElement("statusText").textContent = "正在感知";
+
+        showBadge("环境声音已连接", palettes.field[0]);
         startSpeechRecognition();
-        requestAnimationFrame(draw);
+        requestAnimationFrame(render);
       } catch (error) {
         button.disabled = false;
         button.textContent = "重新尝试";
-        $("error").textContent =
-          "无法使用麦克风。请确认浏览器已允许该网站访问麦克风。";
+
+        getElement("errorMessage").textContent =
+          "无法使用麦克风。请确认浏览器已允许此网站访问麦克风。";
+
         console.error(error);
       }
     }
 
     function startSpeechRecognition() {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const SpeechRecognition =
+        window.SpeechRecognition || window.webkitSpeechRecognition;
+
       if (!SpeechRecognition) return;
 
       const recognition = new SpeechRecognition();
+
       recognition.lang = "zh-CN";
       recognition.continuous = true;
       recognition.interimResults = true;
 
       recognition.onresult = (event) => {
-        let text = "";
+        let transcript = "";
 
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-          text += event.results[i][0].transcript;
+        for (let index = event.resultIndex; index < event.results.length; index++) {
+          transcript += event.results[index][0].transcript;
         }
 
-        text = text.trim();
-        if (!text) return;
+        transcript = transcript.trim();
 
-        speechUntil = Date.now() + 2200;
-        showSpeech(text);
-        spawnWords(text);
-        showBadge("人声", "#f4cf68");
+        if (!transcript) return;
+
+        speechActiveUntil = Date.now() + 2200;
+
+        showCaption(transcript);
+        createWordParticles(transcript);
+        showBadge("检测到人声", "#f4cf68");
       };
 
       recognition.onend = () => {
-        if (active) {
-          try { recognition.start(); } catch (_) {}
+        if (isRunning) {
+          try {
+            recognition.start();
+          } catch (_) {}
         }
       };
 
       recognition.onerror = () => {};
 
-      try { recognition.start(); } catch (_) {}
+      try {
+        recognition.start();
+      } catch (_) {}
     }
 
-    function showSpeech(text) {
-      $("caption").innerHTML =
-        "“" + escapeHtml(text) + "”<small>正在将人声转化为可见文字</small>";
-      $("caption").classList.add("visible");
+    function showCaption(text) {
+      getElement("caption").innerHTML =
+        "“" + escapeHtml(text) + "”" +
+        "<small>人声正被转化为可见文字</small>";
+
+      getElement("caption").classList.add("visible");
 
       clearTimeout(captionTimer);
+
       captionTimer = setTimeout(() => {
-        $("caption").classList.remove("visible");
+        getElement("caption").classList.remove("visible");
       }, 4000);
     }
 
     function escapeHtml(text) {
-      return text.replace(/[&<>"']/g, (character) => ({
-        "&": "&amp;",
-        "<": "&lt;",
-        ">": "&gt;",
-        '"': "&quot;",
-        "'": "&#039;"
-      })[character]);
+      return text.replace(/[&<>"']/g, (character) => {
+        const entities = {
+          "&": "&amp;",
+          "<": "&lt;",
+          ">": "&gt;",
+          '"': "&quot;",
+          "'": "&#039;"
+        };
+
+        return entities[character];
+      });
     }
 
     function showBadge(text, color) {
-      $("badgeText").textContent = text;
-      $("badgeIcon").style.background = color;
-      $("badgeIcon").style.boxShadow = "0 0 14px " + color;
-      $("badge").classList.add("visible");
-      lastBadgeAt = Date.now();
+      getElement("badgeText").textContent = text;
+      getElement("badgeIcon").style.background = color;
+      getElement("badgeIcon").style.boxShadow = "0 0 14px " + color;
+      getElement("soundBadge").classList.add("visible");
+
+      lastBadgeTime = Date.now();
     }
 
-    function getAverage(start, end) {
-      let sum = 0;
-      for (let i = start; i < end; i++) sum += frequencyData[i];
-      return sum / Math.max(1, end - start) / 255;
+    function getAverageFrequency(start, end) {
+      let total = 0;
+
+      for (let index = start; index < end; index++) {
+        total += frequencyData[index];
+      }
+
+      return total / Math.max(1, end - start) / 255;
     }
 
-    function getSoundData() {
+    function analyzeSound() {
       analyser.getByteFrequencyData(frequencyData);
       analyser.getByteTimeDomainData(timeData);
 
-      let rms = 0;
+      let sum = 0;
+
       for (const value of timeData) {
         const normalized = (value - 128) / 128;
-        rms += normalized * normalized;
+        sum += normalized * normalized;
       }
 
-      const energy = Math.min(1, Math.sqrt(rms / timeData.length) * 6);
-      const count = frequencyData.length;
-      const low = getAverage(1, Math.floor(count * 0.08));
-      const mid = getAverage(Math.floor(count * 0.08), Math.floor(count * 0.32));
-      const high = getAverage(Math.floor(count * 0.32), Math.floor(count * 0.82));
+      const energy = Math.min(1, Math.sqrt(sum / timeData.length) * 6);
+      const length = frequencyData.length;
 
-      return { energy, low, mid, high };
+      return {
+        energy,
+        low: getAverageFrequency(1, Math.floor(length * 0.08)),
+        mid: getAverageFrequency(
+          Math.floor(length * 0.08),
+          Math.floor(length * 0.32)
+        ),
+        high: getAverageFrequency(
+          Math.floor(length * 0.32),
+          Math.floor(length * 0.82)
+        )
+      };
     }
 
-    function detectEvents(data) {
+    function detectSoundEvents(sound) {
       const now = Date.now();
-      const jump = data.energy - previousEnergy;
+      const energyJump = sound.energy - previousEnergy;
 
-      if (jump > 0.21 && data.energy > 0.18 && now - lastBeatAt > 260) {
-        lastBeatAt = now;
+      if (
+        energyJump > 0.21 &&
+        sound.energy > 0.18 &&
+        now - lastPulseTime > 260
+      ) {
+        lastPulseTime = now;
+
         ripples.push({
-          x: innerWidth * (0.28 + Math.random() * 0.44),
-          y: innerHeight * (0.28 + Math.random() * 0.44),
-          radius: 10,
-          speed: 4 + data.energy * 9,
+          x: window.innerWidth * (0.3 + Math.random() * 0.4),
+          y: window.innerHeight * (0.3 + Math.random() * 0.4),
+          radius: 8,
+          speed: 4 + sound.energy * 9,
           life: 1,
-          color: colors[mode][1]
+          color: palettes[mode][1]
         });
 
-        if (navigator.vibrate) navigator.vibrate(20);
+        if (navigator.vibrate) {
+          navigator.vibrate(20);
+        }
 
-        if (data.high > data.low * 1.28) {
-          showBadge("短促高频触点", "#f4cf68");
-        } else if (data.low > data.mid * 1.12) {
+        if (sound.high > sound.low * 1.3) {
+          showBadge("短促细节声", "#f4cf68");
+        } else if (sound.low > sound.mid * 1.15) {
           showBadge("低频脉冲", "#f18a75");
         } else {
-          showBadge("节拍变化", colors[mode][0]);
+          showBadge("声音变化", palettes[mode][0]);
         }
       }
 
-      if (now > speechUntil && now - lastBadgeAt > 2600) {
-        if (data.energy < 0.035) {
+      if (now > speechActiveUntil && now - lastBadgeTime > 2700) {
+        if (sound.energy < 0.035) {
           showBadge("相对安静", "#75e5c4");
-        } else if (data.high > data.low * 1.42 && data.energy < 0.24) {
-          showBadge("细腻重复声", "#c1b6f7");
-        } else if (data.low > data.mid * 1.25) {
-          showBadge("低频持续声", "#f18a75");
-        } else if (data.energy > 0.22) {
+        } else if (sound.high > sound.low * 1.42 && sound.energy < 0.24) {
+          showBadge("细微环境声", "#aebdf5");
+        } else if (sound.low > sound.mid * 1.25) {
+          showBadge("持续低频声", "#f18a75");
+        } else if (sound.energy > 0.22) {
           showBadge("活跃声场", "#75e5c4");
         } else {
           showBadge("持续环境声", "#8de2d2");
         }
       }
 
-      previousEnergy = previousEnergy * 0.84 + data.energy * 0.16;
+      previousEnergy = previousEnergy * 0.84 + sound.energy * 0.16;
     }
 
-    function spawnWords(text) {
+    function createWordParticles(text) {
       const characters = Array.from(text).slice(0, 22);
-      const centerX = innerWidth / 2;
-      const centerY = innerHeight * 0.48;
+      const centerX = window.innerWidth / 2;
+      const centerY = window.innerHeight * 0.48;
 
       characters.forEach((character, index) => {
-        words.push({
-          text: character,
-          x: centerX + (index - characters.length / 2) * 14,
-          y: centerY + (Math.random() - 0.5) * 35,
-          vx: (Math.random() - 0.5) * 1.9,
-          vy: -0.3 - Math.random() * 1.5,
-          size: 17 + Math.random() * 16,
+        wordParticles.push({
+          character,
+          x: centerX + (index - characters.length / 2) * 15,
+          y: centerY + (Math.random() - 0.5) * 34,
+          velocityX: (Math.random() - 0.5) * 2,
+          velocityY: -0.3 - Math.random() * 1.4,
+          size: 18 + Math.random() * 15,
           life: 1,
-          color: index % 2 ? "#f4cf68" : "#dffcf1"
+          color: index % 2 === 0 ? "#dffcf1" : "#f4cf68"
         });
       });
     }
 
-    function draw() {
-      if (!active) return;
+    function render() {
+      if (!isRunning) return;
 
-      phase += 0.012;
-      const data = getSoundData();
-      detectEvents(data);
+      animationTime += 0.012;
 
-      ctx.fillStyle = mode === "calm"
-        ? "rgba(7, 15, 18, 0.11)"
-        : "rgba(8, 17, 15, 0.16)";
-      ctx.fillRect(0, 0, innerWidth, innerHeight);
+      const sound = analyzeSound();
+      detectSoundEvents(sound);
 
-      if (mode === "field") drawField(data);
-      if (mode === "music") drawMusic(data);
-      if (mode === "calm") drawCalm(data);
+      context.fillStyle =
+        mode === "soundscape"
+          ? "rgba(7, 15, 18, 0.11)"
+          : "rgba(7, 17, 15, 0.16)";
+
+      context.fillRect(0, 0, window.innerWidth, window.innerHeight);
+
+      if (mode === "field") drawSoundField(sound);
+      if (mode === "rhythm") drawRhythmField(sound);
+      if (mode === "soundscape") drawSoundscape(sound);
 
       drawRipples();
-      drawWords();
+      drawWordParticles();
 
-      requestAnimationFrame(draw);
+      requestAnimationFrame(render);
     }
 
-    function drawField(data) {
-      const cx = innerWidth / 2;
-      const cy = innerHeight / 2;
-      const base = Math.min(innerWidth, innerHeight) * 0.13;
-      const spectrumBars = 130;
-      const currentColors = colors.field;
+    function drawSoundField(sound) {
+      const centerX = window.innerWidth / 2;
+      const centerY = window.innerHeight / 2;
+      const radius = Math.min(window.innerWidth, window.innerHeight) * 0.13;
+      const barCount = 128;
+      const palette = palettes.field;
 
-      for (let i = 0; i < spectrumBars; i++) {
-        const index = Math.floor(i / spectrumBars * frequencyData.length);
-        const value = frequencyData[index] / 255;
-        const angle = i / spectrumBars * Math.PI * 2 - Math.PI / 2;
-        const core = base + data.energy * 42;
-        const length = 10 + value * Math.min(innerWidth, innerHeight) * 0.23;
-
-        ctx.globalAlpha = 0.15 + value * 0.78;
-        ctx.strokeStyle = i % 13 === 0 ? currentColors[1] : currentColors[0];
-        ctx.lineWidth = 1.5 + value * 2;
-        ctx.beginPath();
-        ctx.moveTo(cx + Math.cos(angle) * core, cy + Math.sin(angle) * core);
-        ctx.lineTo(
-          cx + Math.cos(angle) * (core + length),
-          cy + Math.sin(angle) * (core + length)
+      for (let index = 0; index < barCount; index++) {
+        const frequencyIndex = Math.floor(
+          index / barCount * frequencyData.length
         );
-        ctx.stroke();
+
+        const value = frequencyData[frequencyIndex] / 255;
+        const angle = index / barCount * Math.PI * 2 - Math.PI / 2;
+        const coreRadius = radius + sound.energy * 42;
+        const length = 10 + value * Math.min(window.innerWidth, window.innerHeight) * 0.22;
+
+        context.globalAlpha = 0.15 + value * 0.78;
+        context.strokeStyle = index % 13 === 0 ? palette[1] : palette[0];
+        context.lineWidth = 1.5 + value * 2;
+
+        context.beginPath();
+        context.moveTo(
+          centerX + Math.cos(angle) * coreRadius,
+          centerY + Math.sin(angle) * coreRadius
+        );
+        context.lineTo(
+          centerX + Math.cos(angle) * (coreRadius + length),
+          centerY + Math.sin(angle) * (coreRadius + length)
+        );
+        context.stroke();
       }
 
-      const count = Math.floor(6 + data.energy * 32);
-      for (let i = 0; i < count; i++) {
+      const particleCount = Math.floor(5 + sound.energy * 29);
+
+      for (let index = 0; index < particleCount; index++) {
         particles.push({
-          x: cx + (Math.random() - 0.5) * base,
-          y: cy + (Math.random() - 0.5) * base,
-          vx: (Math.random() - 0.5) * (1 + data.energy * 5),
-          vy: (Math.random() - 0.5) * (1 + data.energy * 5),
-          size: 1 + Math.random() * 3 + data.high * 4,
+          x: centerX + (Math.random() - 0.5) * radius,
+          y: centerY + (Math.random() - 0.5) * radius,
+          velocityX: (Math.random() - 0.5) * (1 + sound.energy * 5),
+          velocityY: (Math.random() - 0.5) * (1 + sound.energy * 5),
+          size: 1 + Math.random() * 3 + sound.high * 4,
           life: 1,
-          color: currentColors[Math.floor(Math.random() * currentColors.length)]
+          color: palette[Math.floor(Math.random() * palette.length)]
         });
       }
 
       drawParticles();
-      ctx.globalAlpha = 0.14 + data.energy * 0.28;
-      ctx.fillStyle = currentColors[0];
-      ctx.beginPath();
-      ctx.arc(cx, cy, base * (0.72 + data.energy * 0.85), 0, Math.PI * 2);
-      ctx.fill();
-      ctx.globalAlpha = 1;
+
+      context.globalAlpha = 0.12 + sound.energy * 0.3;
+      context.fillStyle = palette[0];
+      context.beginPath();
+      context.arc(
+        centerX,
+        centerY,
+        radius * (0.72 + sound.energy * 0.85),
+        0,
+        Math.PI * 2
+      );
+      context.fill();
+
+      context.globalAlpha = 1;
     }
 
-    function drawMusic(data) {
-      const width = innerWidth;
-      const height = innerHeight;
-      const currentColors = colors.music;
+    function drawRhythmField(sound) {
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+      const centerX = width / 2;
+      const centerY = height / 2;
+      const palette = palettes.rhythm;
       const baseline = height * 0.76;
 
-      ctx.beginPath();
-      ctx.moveTo(0, height);
+      context.beginPath();
+      context.moveTo(0, height);
 
       for (let x = 0; x <= width; x += 12) {
         const wave =
-          Math.sin(x * 0.012 + phase * 3) * (18 + data.low * 80) +
-          Math.sin(x * 0.031 - phase * 2) * (8 + data.mid * 35);
-        ctx.lineTo(x, baseline + wave);
+          Math.sin(x * 0.012 + animationTime * 3) * (18 + sound.low * 80) +
+          Math.sin(x * 0.031 - animationTime * 2) * (8 + sound.mid * 35);
+
+        context.lineTo(x, baseline + wave);
       }
 
-      ctx.lineTo(width, height);
-      ctx.closePath();
-      ctx.globalAlpha = 0.25;
-      ctx.fillStyle = currentColors[1];
-      ctx.fill();
+      context.lineTo(width, height);
+      context.closePath();
+      context.globalAlpha = 0.25;
+      context.fillStyle = palette[1];
+      context.fill();
 
-      const cx = width / 2;
-      const cy = height / 2;
-      const rings = 8;
+      for (let ring = 0; ring < 8; ring++) {
+        const radius = 55 + ring * 27 + sound.energy * 75;
 
-      for (let ring = 0; ring < rings; ring++) {
-        const radius = 55 + ring * 27 + data.energy * 75;
-        ctx.globalAlpha = 0.08 + (rings - ring) * 0.018;
-        ctx.strokeStyle = currentColors[ring % currentColors.length];
-        ctx.lineWidth = ring % 3 === 0 ? 2 : 1;
-        ctx.beginPath();
-        ctx.arc(cx, cy, radius, 0, Math.PI * 2);
-        ctx.stroke();
+        context.globalAlpha = 0.08 + (8 - ring) * 0.018;
+        context.strokeStyle = palette[ring % palette.length];
+        context.lineWidth = ring % 3 === 0 ? 2 : 1;
+
+        context.beginPath();
+        context.arc(centerX, centerY, radius, 0, Math.PI * 2);
+        context.stroke();
       }
 
-      const orbitParticles = Math.floor(15 + data.energy * 70);
-      for (let i = 0; i < orbitParticles; i++) {
-        const angle = phase * (0.7 + i % 3) + i * 0.48;
-        const radius = 105 + (i % 5) * 31 + data.energy * 95;
-        ctx.globalAlpha = 0.15 + data.high * 0.65;
-        ctx.fillStyle = currentColors[i % currentColors.length];
-        ctx.beginPath();
-        ctx.arc(
-          cx + Math.cos(angle) * radius,
-          cy + Math.sin(angle) * radius * 0.58,
-          1 + data.high * 4,
+      const orbitCount = Math.floor(15 + sound.energy * 70);
+
+      for (let index = 0; index < orbitCount; index++) {
+        const angle =
+          animationTime * (0.7 + index % 3) + index * 0.48;
+        const radius = 105 + (index % 5) * 31 + sound.energy * 95;
+
+        context.globalAlpha = 0.15 + sound.high * 0.65;
+        context.fillStyle = palette[index % palette.length];
+        context.beginPath();
+        context.arc(
+          centerX + Math.cos(angle) * radius,
+          centerY + Math.sin(angle) * radius * 0.58,
+          1 + sound.high * 4,
           0,
           Math.PI * 2
         );
-        ctx.fill();
+        context.fill();
       }
 
-      ctx.globalAlpha = 1;
+      context.globalAlpha = 1;
     }
 
-    function drawCalm(data) {
-      const cx = innerWidth / 2;
-      const cy = innerHeight / 2;
-      const currentColors = colors.calm;
-      const breath = (Math.sin(phase * 1.4) + 1) / 2;
-      const base = Math.min(innerWidth, innerHeight) * 0.12;
+    function drawSoundscape(sound) {
+      const centerX = window.innerWidth / 2;
+      const centerY = window.innerHeight / 2;
+      const palette = palettes.soundscape;
+      const base = Math.min(window.innerWidth, window.innerHeight) * 0.12;
+      const breath = (Math.sin(animationTime * 1.4) + 1) / 2;
 
-      for (let i = 8; i >= 0; i--) {
-        const radius = base + i * 33 + breath * 32 + data.energy * 85;
-        ctx.globalAlpha = 0.018 + (8 - i) * 0.012;
-        ctx.fillStyle = currentColors[i % currentColors.length];
-        ctx.beginPath();
-        ctx.arc(cx, cy, radius, 0, Math.PI * 2);
-        ctx.fill();
+      for (let index = 8; index >= 0; index--) {
+        const radius =
+          base +
+          index * 33 +
+          breath * 32 +
+          sound.energy * 85;
+
+        context.globalAlpha = 0.018 + (8 - index) * 0.012;
+        context.fillStyle = palette[index % palette.length];
+        context.beginPath();
+        context.arc(centerX, centerY, radius, 0, Math.PI * 2);
+        context.fill();
       }
 
-      const touchCount = Math.floor(4 + data.high * 38);
-      for (let i = 0; i < touchCount; i++) {
-        const angle = phase * (0.5 + i * 0.02) + i * 1.7;
-        const radius = 80 + (i % 4) * 75 + data.high * 130;
-        const x = cx + Math.cos(angle) * radius;
-        const y = cy + Math.sin(angle) * radius * 0.64;
+      const detailCount = Math.floor(4 + sound.high * 38);
 
-        ctx.globalAlpha = 0.15 + data.high * 0.58;
-        ctx.fillStyle = currentColors[i % currentColors.length];
-        ctx.beginPath();
-        ctx.arc(x, y, 1.2 + data.high * 6, 0, Math.PI * 2);
-        ctx.fill();
+      for (let index = 0; index < detailCount; index++) {
+        const angle =
+          animationTime * (0.5 + index * 0.02) + index * 1.7;
+        const radius = 80 + (index % 4) * 75 + sound.high * 130;
+        const x = centerX + Math.cos(angle) * radius;
+        const y = centerY + Math.sin(angle) * radius * 0.64;
 
-        if (data.high > 0.13 && Math.random() < 0.07) {
+        context.globalAlpha = 0.15 + sound.high * 0.58;
+        context.fillStyle = palette[index % palette.length];
+        context.beginPath();
+        context.arc(x, y, 1.2 + sound.high * 6, 0, Math.PI * 2);
+        context.fill();
+
+        if (sound.high > 0.13 && Math.random() < 0.06) {
           ripples.push({
-            x, y,
+            x,
+            y,
             radius: 3,
-            speed: 1.8 + data.high * 3,
+            speed: 1.8 + sound.high * 3,
             life: 0.55,
-            color: currentColors[1]
+            color: palette[1]
           });
         }
       }
 
-      ctx.globalAlpha = 1;
+      context.globalAlpha = 1;
     }
 
     function drawParticles() {
-      particles = particles.filter((particle) => particle.life > 0.02);
+      const visibleParticles = particles.filter(
+        (particle) => particle.life > 0.02
+      );
+
+      particles.length = 0;
+      particles.push(...visibleParticles);
 
       particles.forEach((particle) => {
-        particle.x += particle.vx;
-        particle.y += particle.vy;
-        particle.vx *= 0.985;
-        particle.vy *= 0.985;
+        particle.x += particle.velocityX;
+        particle.y += particle.velocityY;
+        particle.velocityX *= 0.985;
+        particle.velocityY *= 0.985;
         particle.life *= 0.965;
 
-        ctx.globalAlpha = particle.life * 0.8;
-        ctx.fillStyle = particle.color;
-        ctx.beginPath();
-        ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
-        ctx.fill();
+        context.globalAlpha = particle.life * 0.8;
+        context.fillStyle = particle.color;
+        context.beginPath();
+        context.arc(
+          particle.x,
+          particle.y,
+          particle.size,
+          0,
+          Math.PI * 2
+        );
+        context.fill();
       });
 
-      if (particles.length > 900) particles.splice(0, 150);
-      ctx.globalAlpha = 1;
+      if (particles.length > 900) {
+        particles.splice(0, 150);
+      }
+
+      context.globalAlpha = 1;
     }
 
     function drawRipples() {
-      ripples = ripples.filter((ripple) => ripple.life > 0.015);
+      const activeRipples = ripples.filter((ripple) => ripple.life > 0.015);
+
+      ripples.length = 0;
+      ripples.push(...activeRipples);
 
       ripples.forEach((ripple) => {
         ripple.radius += ripple.speed;
         ripple.life *= 0.968;
 
-        ctx.globalAlpha = ripple.life * 0.65;
-        ctx.strokeStyle = ripple.color;
-        ctx.lineWidth = 1.5;
-        ctx.beginPath();
-        ctx.arc(ripple.x, ripple.y, ripple.radius, 0, Math.PI * 2);
-        ctx.stroke();
+        context.globalAlpha = ripple.life * 0.65;
+        context.strokeStyle = ripple.color;
+        context.lineWidth = 1.5;
+        context.beginPath();
+        context.arc(
+          ripple.x,
+          ripple.y,
+          ripple.radius,
+          0,
+          Math.PI * 2
+        );
+        context.stroke();
       });
 
-      ctx.globalAlpha = 1;
+      context.globalAlpha = 1;
     }
 
-    function drawWords() {
-      words = words.filter((word) => word.life > 0.02);
+    function drawWordParticles() {
+      const visibleWords = wordParticles.filter((word) => word.life > 0.02);
 
-      words.forEach((word) => {
-        word.x += word.vx;
-        word.y += word.vy;
-        word.vx *= 0.988;
-        word.vy *= 0.988;
+      wordParticles.length = 0;
+      wordParticles.push(...visibleWords);
+
+      wordParticles.forEach((word) => {
+        word.x += word.velocityX;
+        word.y += word.velocityY;
+        word.velocityX *= 0.988;
+        word.velocityY *= 0.988;
         word.life *= 0.978;
 
-        ctx.globalAlpha = word.life;
-        ctx.fillStyle = word.color;
-        ctx.font = "600 " + word.size + "px PingFang SC, Microsoft YaHei, sans-serif";
-        ctx.textAlign = "center";
-        ctx.fillText(word.text, word.x, word.y);
+        context.globalAlpha = word.life;
+        context.fillStyle = word.color;
+        context.font =
+          "600 " +
+          word.size +
+          "px PingFang SC, Microsoft YaHei, sans-serif";
+        context.textAlign = "center";
+        context.fillText(word.character, word.x, word.y);
       });
 
-      ctx.globalAlpha = 1;
+      context.globalAlpha = 1;
     }
   </script>
 </body>
