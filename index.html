@@ -1,0 +1,518 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>看见正在发生的声音</title>
+  <style>
+    :root {
+      --bg: #121514;
+      --surface: rgba(27, 34, 31, 0.78);
+      --line: rgba(216, 239, 228, 0.16);
+      --text: #f3f8f4;
+      --muted: #9eaaa4;
+      --mint: #82e8ca;
+      --coral: #ff916c;
+      --yellow: #f3d36a;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      overflow: hidden;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 12% 14%, rgba(130, 232, 202, 0.08), transparent 25%),
+        radial-gradient(circle at 86% 78%, rgba(255, 145, 108, 0.06), transparent 24%),
+        var(--bg);
+      font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+
+    #visualizer {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    .noise {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.08;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.5'/%3E%3C/svg%3E");
+    }
+
+    header {
+      position: fixed;
+      z-index: 2;
+      top: 0;
+      left: 0;
+      right: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 24px clamp(20px, 4vw, 56px);
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(to bottom, rgba(18, 21, 20, 0.92), rgba(18, 21, 20, 0));
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(18px, 2vw, 26px);
+      font-weight: 600;
+      letter-spacing: 0;
+    }
+
+    .status {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #69736d;
+      transition: background 0.3s, box-shadow 0.3s;
+    }
+
+    .status-dot.active {
+      background: var(--mint);
+      box-shadow: 0 0 14px var(--mint);
+    }
+
+    .intro {
+      position: fixed;
+      z-index: 2;
+      top: 50%;
+      left: 50%;
+      width: min(560px, calc(100vw - 40px));
+      text-align: center;
+      transform: translate(-50%, -50%);
+      transition: opacity 0.7s, visibility 0.7s;
+    }
+
+    .intro.hidden {
+      visibility: hidden;
+      opacity: 0;
+    }
+
+    .intro p {
+      margin: 0 0 30px;
+      font-size: clamp(18px, 2.4vw, 27px);
+      line-height: 1.65;
+      font-weight: 400;
+    }
+
+    button {
+      border: 0;
+      color: var(--bg);
+      background: var(--mint);
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.2s, background 0.2s;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      background: #b0f7df;
+    }
+
+    button:focus-visible {
+      outline: 3px solid var(--yellow);
+      outline-offset: 3px;
+    }
+
+    #startButton {
+      padding: 13px 24px;
+      border-radius: 4px;
+    }
+
+    .caption {
+      position: fixed;
+      z-index: 1;
+      top: 50%;
+      left: 50%;
+      max-width: min(78vw, 680px);
+      margin: 0;
+      color: #ffffff;
+      text-align: center;
+      font-size: clamp(28px, 5vw, 70px);
+      line-height: 1.2;
+      font-weight: 600;
+      opacity: 0;
+      transform: translate(-50%, -50%) scale(0.96);
+      text-shadow: 0 2px 30px rgba(0, 0, 0, 0.55);
+      pointer-events: none;
+      transition: opacity 0.45s, transform 0.45s;
+    }
+
+    .caption.show {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+
+    .legend {
+      position: fixed;
+      z-index: 2;
+      bottom: 108px;
+      left: clamp(20px, 4vw, 56px);
+      display: flex;
+      gap: 18px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .legend span {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .legend i {
+      display: inline-block;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+    }
+
+    .controls {
+      position: fixed;
+      z-index: 2;
+      right: clamp(20px, 4vw, 56px);
+      bottom: 28px;
+      left: clamp(20px, 4vw, 56px);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .mode-switch {
+      display: inline-flex;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      background: var(--surface);
+      backdrop-filter: blur(10px);
+    }
+
+    .mode-switch button {
+      min-height: 40px;
+      padding: 0 14px;
+      color: var(--muted);
+      background: transparent;
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .mode-switch button.active {
+      color: var(--bg);
+      background: var(--mint);
+      font-weight: 700;
+    }
+
+    #stopButton {
+      padding: 10px 14px;
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      color: var(--text);
+      background: rgba(24, 30, 28, 0.85);
+      font-size: 13px;
+    }
+
+    #stopButton:hover {
+      background: rgba(255, 145, 108, 0.2);
+    }
+
+    @media (max-width: 560px) {
+      header {
+        padding: 18px 20px;
+      }
+
+      .legend {
+        bottom: 102px;
+        gap: 12px;
+      }
+
+      .controls {
+        bottom: 20px;
+      }
+
+      .mode-switch button {
+        padding: 0 10px;
+        font-size: 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="visualizer" aria-label="声音实时视觉化画布"></canvas>
+  <div class="noise"></div>
+
+  <header>
+    <h1>看见正在发生的声音</h1>
+    <div class="status" aria-live="polite">
+      <span class="status-dot" id="statusDot"></span>
+      <span id="statusText">等待感知</span>
+    </div>
+  </header>
+
+  <main>
+    <section class="intro" id="intro">
+      <p>环境并没有安静下来。<br>它正在变成光、节奏与触感。</p>
+      <button id="startButton">开始感知</button>
+    </section>
+
+    <p class="caption" id="caption" aria-live="polite"></p>
+
+    <div class="legend" aria-label="频段说明">
+      <span><i style="background:#82e8ca"></i>低频 / 空间</span>
+      <span><i style="background:#f3d36a"></i>中频 / 靠近</span>
+      <span><i style="background:#ff916c"></i>高频 / 碎片</span>
+    </div>
+
+    <div class="controls">
+      <div class="mode-switch" aria-label="感知模式">
+        <button class="active" data-mode="visual">光谱与振动</button>
+        <button data-mode="text">文字与光点</button>
+      </div>
+      <button id="stopButton" hidden>停止</button>
+    </div>
+  </main>
+
+  <script>
+    const canvas = document.getElementById("visualizer");
+    const ctx = canvas.getContext("2d");
+    const startButton = document.getElementById("startButton");
+    const stopButton = document.getElementById("stopButton");
+    const intro = document.getElementById("intro");
+    const caption = document.getElementById("caption");
+    const statusDot = document.getElementById("statusDot");
+    const statusText = document.getElementById("statusText");
+    const modeButtons = document.querySelectorAll("[data-mode]");
+
+    let audioContext;
+    let analyser;
+    let stream;
+    let frequencyData;
+    let animationFrame;
+    let mode = "visual";
+    let lastCaptionTime = 0;
+    let lastVibrationTime = 0;
+    let lowSmooth = 0;
+    let midSmooth = 0;
+    let highSmooth = 0;
+
+    const captions = {
+      quiet: ["空间很安静", "声音正在停留", "细微的存在"],
+      medium: ["环境正在变化", "这里有持续的流动", "声音靠近了一点"],
+      loud: ["有人靠近", "空间正在变得紧张", "此刻正在发生", "请感受这份震动"]
+    };
+
+    function resizeCanvas() {
+      const ratio = window.devicePixelRatio || 1;
+      canvas.width = window.innerWidth * ratio;
+      canvas.height = window.innerHeight * ratio;
+      canvas.style.width = `${window.innerWidth}px`;
+      canvas.style.height = `${window.innerHeight}px`;
+      ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+    }
+
+    function getBandEnergy(startHz, endHz) {
+      const nyquist = audioContext.sampleRate / 2;
+      const binCount = frequencyData.length;
+      const start = Math.floor((startHz / nyquist) * binCount);
+      const end = Math.min(binCount - 1, Math.ceil((endHz / nyquist) * binCount));
+
+      let sum = 0;
+      for (let i = start; i <= end; i++) sum += frequencyData[i];
+      return sum / Math.max(1, end - start + 1) / 255;
+    }
+
+    function drawCircle(x, y, radius, color, alpha) {
+      const gradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
+      gradient.addColorStop(0, `${color}${Math.round(alpha * 255).toString(16).padStart(2, "0")}`);
+      gradient.addColorStop(1, `${color}00`);
+      ctx.fillStyle = gradient;
+      ctx.beginPath();
+      ctx.arc(x, y, radius, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    function drawVisual(low, mid, high, time) {
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+      const centerX = width / 2;
+      const centerY = height / 2;
+
+      ctx.fillStyle = "rgba(18, 21, 20, 0.18)";
+      ctx.fillRect(0, 0, width, height);
+
+      const lowRadius = 90 + low * Math.min(width, height) * 0.42;
+      const lowWave = Math.sin(time * 0.0018) * 15;
+      drawCircle(centerX, centerY, lowRadius + lowWave, "#82e8ca", 0.28 + low * 0.3);
+      drawCircle(centerX, centerY, lowRadius * 0.58, "#d7fff1", 0.1 + low * 0.18);
+
+      const count = mode === "text" ? 36 : 90;
+      for (let i = 0; i < count; i++) {
+        const angle = (Math.PI * 2 * i) / count + time * (0.0002 + high * 0.002);
+        const baseDistance = 145 + (i % 7) * 17;
+        const distance = baseDistance + mid * 180 + Math.sin(time * 0.002 + i) * high * 55;
+        const x = centerX + Math.cos(angle) * distance;
+        const y = centerY + Math.sin(angle) * distance;
+        const size = 1.5 + high * 7 + (i % 3);
+
+        ctx.fillStyle = i % 3 === 0 ? "#ff916c" : i % 3 === 1 ? "#f3d36a" : "#82e8ca";
+        ctx.globalAlpha = 0.18 + high * 0.75;
+        ctx.beginPath();
+        ctx.arc(x, y, size, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      if (mode === "visual") {
+        const bars = 44;
+        const barWidth = Math.max(2, width / bars - 7);
+        for (let i = 0; i < bars; i++) {
+          const dataIndex = Math.floor((i / bars) * frequencyData.length * 0.78);
+          const value = frequencyData[dataIndex] / 255;
+          const barHeight = value * height * 0.3;
+          const x = i * (width / bars) + 3;
+          ctx.fillStyle = i < 12 ? "#82e8ca" : i < 28 ? "#f3d36a" : "#ff916c";
+          ctx.globalAlpha = 0.18 + value * 0.65;
+          ctx.fillRect(x, height - barHeight, barWidth, barHeight);
+        }
+      }
+
+      ctx.globalAlpha = 1;
+    }
+
+    function showCaption(level) {
+      const now = Date.now();
+      if (now - lastCaptionTime < 3500) return;
+
+      const words = captions[level];
+      caption.textContent = words[Math.floor(Math.random() * words.length)];
+      caption.classList.add("show");
+      lastCaptionTime = now;
+
+      window.setTimeout(() => caption.classList.remove("show"), 2200);
+    }
+
+    function vibrate(low, mid, high) {
+      if (!navigator.vibrate || mode !== "visual") return;
+
+      const now = Date.now();
+      if (now - lastVibrationTime < 900) return;
+
+      if (low > 0.22) {
+        navigator.vibrate(Math.round(30 + low * 140));
+        lastVibrationTime = now;
+      } else if (mid > 0.28) {
+        navigator.vibrate([20, 35, 20]);
+        lastVibrationTime = now;
+      } else if (high > 0.34) {
+        navigator.vibrate([10, 22, 10, 22, 10]);
+        lastVibrationTime = now;
+      }
+    }
+
+    function render(time) {
+      analyser.getByteFrequencyData(frequencyData);
+
+      const low = getBandEnergy(35, 220);
+      const mid = getBandEnergy(220, 2200);
+      const high = getBandEnergy(2200, 9000);
+
+      lowSmooth = lowSmooth * 0.84 + low * 0.16;
+      midSmooth = midSmooth * 0.8 + mid * 0.2;
+      highSmooth = highSmooth * 0.7 + high * 0.3;
+
+      drawVisual(lowSmooth, midSmooth, highSmooth, time);
+
+      const overall = lowSmooth * 0.4 + midSmooth * 0.35 + highSmooth * 0.25;
+      if (overall > 0.32) showCaption("loud");
+      else if (overall > 0.13) showCaption("medium");
+      else if (overall > 0.025 && Math.random() < 0.009) showCaption("quiet");
+
+      vibrate(lowSmooth, midSmooth, highSmooth);
+      animationFrame = requestAnimationFrame(render);
+    }
+
+    async function startExperience() {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            echoCancellation: false,
+            noiseSuppression: false,
+            autoGainControl: false
+          }
+        });
+
+        audioContext = new AudioContext();
+        await audioContext.resume();
+
+        analyser = audioContext.createAnalyser();
+        analyser.fftSize = 2048;
+        analyser.smoothingTimeConstant = 0.78;
+        frequencyData = new Uint8Array(analyser.frequencyBinCount);
+
+        const source = audioContext.createMediaStreamSource(stream);
+        source.connect(analyser);
+
+        // 注意：analyser 不连接 destination，因此环境声音不会被网页回放。
+        intro.classList.add("hidden");
+        stopButton.hidden = false;
+        statusDot.classList.add("active");
+        statusText.textContent = "正在感知";
+        render(0);
+      } catch (error) {
+        statusText.textContent = "无法访问麦克风";
+        console.error("Microphone permission error:", error);
+        alert("需要麦克风权限才能开始。请确认页面运行在 HTTPS 或 localhost 环境，并允许浏览器访问麦克风。");
+      }
+    }
+
+    function stopExperience() {
+      cancelAnimationFrame(animationFrame);
+      if (stream) stream.getTracks().forEach(track => track.stop());
+      if (audioContext) audioContext.close();
+
+      ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+      intro.classList.remove("hidden");
+      stopButton.hidden = true;
+      statusDot.classList.remove("active");
+      statusText.textContent = "等待感知";
+      caption.classList.remove("show");
+      navigator.vibrate?.(0);
+
+      stream = null;
+      audioContext = null;
+      analyser = null;
+    }
+
+    startButton.addEventListener("click", startExperience);
+    stopButton.addEventListener("click", stopExperience);
+
+    modeButtons.forEach(button => {
+      button.addEventListener("click", () => {
+        mode = button.dataset.mode;
+        modeButtons.forEach(item => item.classList.toggle("active", item === button));
+        navigator.vibrate?.(mode === "text" ? 0 : 20);
+      });
+    });
+
+    window.addEventListener("resize", resizeCanvas);
+    resizeCanvas();
+  </script>
+</body>
+</html>
